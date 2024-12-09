@@ -3,75 +3,55 @@ package main
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
-	"strings"
 )
 
-func parse() (targets []int, components [][]int) {
-	data, _ := os.ReadFile("data/day7.txt")
-	lines := strings.Split(strings.TrimSpace((string(data))), "\n")
-
-	for _, line := range lines {
-		split := strings.Split(strings.TrimSpace((string(line))), ":")
-		target, _ := strconv.Atoi(split[0])
-		targets = append(targets, target)
-		fields := strings.Fields(split[1])
-		var componentRow []int
-		for _, field := range fields {
-			a, _ := strconv.Atoi(field)
-			componentRow = append(componentRow, a)
-		}
-		components = append(components, componentRow)
-	}
-
-	return targets, components
+func parse() string {
+	data, _ := os.ReadFile("data/day3.txt")
+	return string(data)
 }
 
-func isSolvable(currentValue, target, position int, components []int) bool {
-	if position >= len(components) {
-		return currentValue == target
-	}
-
-	return isSolvable(currentValue+components[position], target, position+1, components) ||
-		isSolvable(currentValue*components[position], target, position+1, components)
-}
-
-func solve1(targets []int, components [][]int) {
+func solve1(s string) {
 	score := 0
+	reMul, _ := regexp.Compile(`mul\(\d+,\d+\)`)
+	reDigit, _ := regexp.Compile(`\d+`)
 
-	for i, target := range targets {
-		if isSolvable(0, target, 0, components[i]) {
-			score += target
-		}
+	matches := reMul.FindAllString(s, -1)
+
+	for _, match := range matches {
+		nums := reDigit.FindAllString(match, -1)
+		d1, _ := strconv.Atoi(nums[0])
+		d2, _ := strconv.Atoi(nums[1])
+		score += d1 * d2
 	}
 
 	fmt.Println("ANSWER 1: ", score)
 }
 
-func isSolvableWithConcat(currentValue, target, position int, components []int) bool {
-
-	if position >= len(components) {
-		return currentValue == target
-	}
-	positionValue := components[position]
-
-	strA := strconv.Itoa(currentValue)
-	strB := strconv.Itoa(positionValue)
-	concated, _ := strconv.Atoi(strA + strB)
-	multipled := currentValue * positionValue
-	added := currentValue + positionValue
-
-	return isSolvableWithConcat(multipled, target, position+1, components) ||
-		isSolvableWithConcat(added, target, position+1, components) ||
-		isSolvableWithConcat(concated, target, position+1, components)
-}
-
-func solve2(targets []int, components [][]int) {
+func solve2(s string) {
 	score := 0
+	enabled := true
+	reMul, _ := regexp.Compile(`do\(\)|don't\(\)|mul\(\d+,\d+\)`)
+	reDigit, _ := regexp.Compile(`\d+`)
 
-	for i, target := range targets {
-		if isSolvableWithConcat(0, target, 0, components[i]) {
-			score += target
+	matches := reMul.FindAllString(s, -1)
+
+	for _, match := range matches {
+		if match == "do()" {
+			enabled = true
+			continue
+		}
+		if match == "don't()" {
+			enabled = false
+			continue
+		}
+
+		nums := reDigit.FindAllString(match, -1)
+		d1, _ := strconv.Atoi(nums[0])
+		d2, _ := strconv.Atoi(nums[1])
+		if enabled {
+			score += d1 * d2
 		}
 	}
 
@@ -79,7 +59,7 @@ func solve2(targets []int, components [][]int) {
 }
 
 func main() {
-	targets, components := parse()
-	solve1(targets, components)
-	solve2(targets, components)
+	s := parse()
+	solve1(s)
+	solve2(s)
 }
